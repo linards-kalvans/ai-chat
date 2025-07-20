@@ -6,36 +6,44 @@ const ChatList = ({
     currentChatId,
     onChatSelect,
     onNewChat,
-    onDeleteChat
+    onDeleteChat,
+    currentPage,
+    totalPages,
+    onPageChange
 }) => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const chatsPerPage = 10;
-
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString();
+        return date.toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
     };
 
     const formatTime = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
     };
 
-    // Sort chats by updated_at (most recent first), fallback to created_at
-    const sortedChats = [...chats].sort((a, b) => {
-        const dateA = new Date(a.updated_at || a.created_at);
-        const dateB = new Date(b.updated_at || b.created_at);
-        return dateB - dateA;
-    });
+    const formatProvider = (provider) => {
+        const providerMap = {
+            'openai': 'OpenAI',
+            'xai': 'xAI'
+        };
+        return providerMap[provider] || provider;
+    };
 
-    // Calculate pagination
-    const totalPages = Math.ceil(sortedChats.length / chatsPerPage);
-    const startIndex = (currentPage - 1) * chatsPerPage;
-    const endIndex = startIndex + chatsPerPage;
-    const currentChats = sortedChats.slice(startIndex, endIndex);
+    // Ensure chats is an array and handle different response formats
+    const chatsArray = Array.isArray(chats) ? chats : (chats?.chats || []);
 
     const goToPage = (page) => {
-        setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+        if (onPageChange) {
+            onPageChange(page);
+        }
     };
 
     const goToPreviousPage = () => {
@@ -60,7 +68,7 @@ const ChatList = ({
             </div>
 
             <div className="chat-list-content">
-                {chats.length === 0 ? (
+                {chatsArray.length === 0 ? (
                     <div className="empty-state">
                         <MessageSquare size={48} />
                         <p>No chats yet</p>
@@ -68,7 +76,7 @@ const ChatList = ({
                     </div>
                 ) : (
                     <>
-                        {currentChats.map((chat) => (
+                        {chatsArray.map((chat) => (
                             <div
                                 key={chat.id}
                                 className={`chat-item ${currentChatId === chat.id ? 'active' : ''}`}
@@ -77,12 +85,12 @@ const ChatList = ({
                                 <div className="chat-item-content">
                                     <div className="chat-title">{chat.title}</div>
                                     <div className="chat-meta">
-                                        <span className="chat-provider">{chat.model_provider}</span>
+                                        <span className="chat-provider">{formatProvider(chat.model_provider)}</span>
                                         <span className="chat-time">{formatTime(chat.updated_at || chat.created_at)}</span>
                                         <span className="chat-date">{formatDate(chat.updated_at || chat.created_at)}</span>
                                     </div>
                                     <div className="chat-message-count">
-                                        {chat.message_count} messages
+                                        {chat.message_count || 0} messages
                                     </div>
                                 </div>
                                 <button

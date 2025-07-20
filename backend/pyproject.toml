@@ -2,35 +2,44 @@
 name = "ai-chat-backend"
 version = "0.1.0"
 description = "AI Chat Backend with FastAPI"
-authors = [{name = "Your Name", email = "your.email@example.com"}]
-readme = "README.md"
-requires-python = ">=3.8"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
 dependencies = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "sqlalchemy>=2.0.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
-    "openai>=1.0.0",
-    "httpx>=0.25.0",
     "python-multipart>=0.0.6",
-    "psycopg2-binary>=2.9.0",  # PostgreSQL driver
+    "openai>=1.0.0",
+    "xai-sdk>=1.0.0",  # xAI SDK for OpenAI-compatible interface
+    "pypdf>=3.0.0",
+    "python-docx>=0.8.11",
+    "aiofiles>=23.0.0",
+    "psycopg2-binary>=2.9.0",  # PostgreSQL support
 ]
+requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
     "black>=23.0.0",
     "isort>=5.12.0",
+    "flake8>=6.0.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py311']
 
 [tool.isort]
 profile = "black"

@@ -1,0 +1,18 @@
+AI Chat Application Test Document
+
+This is a test document to demonstrate the file upload functionality in our AI chat application.
+
+Key Features:
+1. File Upload Support - Users can upload various file types including PDF, DOCX, TXT, and MD files
+2. Text Extraction - The application extracts text content from uploaded files
+3. Context Integration - Extracted text is included as context in AI prompts
+4. Multiple File Types - Supports PDF, Word documents, plain text, and markdown files
+5. File Management - Users can view, delete, and manage uploaded files
+
+Technical Implementation:
+- Backend: FastAPI with file processing services
+- Frontend: React with drag-and-drop file upload
+- Database: SQLite with file metadata storage
+- File Processing: PyPDF for PDFs, python-docx for Word documents
+
+This document will be used to test how the AI responds when given context from uploaded files. 

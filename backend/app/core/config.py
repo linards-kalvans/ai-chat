@@ -1,26 +1,26 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
-
+import os
 
 class Settings(BaseSettings):
+    # Database configuration
+    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./chat.db")
+    
     # API Keys
-    openai_api_key: Optional[str] = None
-    xai_api_key: Optional[str] = None
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     
-    # Database
-    database_url: str = "sqlite:///./chat_history.db"
-    
-    # Server
+    # Server configuration
     host: str = "0.0.0.0"
-    port: int = 8000
-    debug: bool = False
+    port: int = int(os.getenv("PORT", "8000"))
     
-    # CORS
-    allowed_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # CORS configuration
+    allowed_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://your-frontend-app.fly.dev"  # Update this with your frontend domain
+    ]
     
     class Config:
         env_file = ".env"
         case_sensitive = False
-
 
 settings = Settings() 

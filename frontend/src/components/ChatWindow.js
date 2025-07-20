@@ -1,154 +1,164 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Brain, Search } from 'lucide-react';
+import { Send, User, Bot, Brain, Search, Paperclip, Settings } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import FileUpload from './FileUpload';
 
 const ChatWindow = ({
     currentChat,
     messages,
     onSendMessage,
-    isLoading
+    isLoading,
+    thinkMode,
+    setThinkMode,
+    deepResearchMode,
+    setDeepResearchMode,
+    selectedModel,
+    setSelectedModel
 }) => {
-    const [inputMessage, setInputMessage] = useState('');
-    const [selectedProvider, setSelectedProvider] = useState('openai');
-    const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo');
-    const [thinkingMode, setThinkingMode] = useState(false);
-    const [deepResearchMode, setDeepResearchMode] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const [showFileUpload, setShowFileUpload] = useState(false);
+    const [showModelSelector, setShowModelSelector] = useState(false);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
-    // Update selected provider and model when currentChat changes
-    useEffect(() => {
-        if (currentChat) {
-            setSelectedProvider(currentChat.model_provider || 'openai');
-            setSelectedModel(currentChat.model_name || 'gpt-3.5-turbo');
-        }
-    }, [currentChat]);
-
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        if (!inputMessage.trim() || isLoading) return;
-
-        // Build the message content based on selected modes
-        let enhancedContent = inputMessage;
-
-        if (thinkingMode) {
-            enhancedContent = `[THINKING MODE] Please think through this step by step: ${inputMessage}`;
+        if (inputValue.trim() && !isLoading) {
+            onSendMessage(inputValue);
+            setInputValue('');
         }
-
-        if (deepResearchMode) {
-            enhancedContent = `[DEEP RESEARCH MODE] Please provide a comprehensive, well-researched response with detailed analysis: ${inputMessage}`;
-        }
-
-        if (thinkingMode && deepResearchMode) {
-            enhancedContent = `[THINKING + DEEP RESEARCH MODE] Please think through this step by step and provide a comprehensive, well-researched response with detailed analysis: ${inputMessage}`;
-        }
-
-        const messageData = {
-            content: enhancedContent,
-            provider: selectedProvider,
-            model: selectedModel,
-            thinkingMode,
-            deepResearchMode
-        };
-
-        await onSendMessage(messageData);
-        setInputMessage('');
-        // Reset modes after sending
-        setThinkingMode(false);
-        setDeepResearchMode(false);
     };
 
-    const formatTime = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const formatTime = (timestamp) => {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
     };
 
-    const getModelOptions = (provider) => {
-        if (provider === 'openai') {
-            return [
-                { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
-                { value: 'gpt-4', label: 'GPT-4' },
-                { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' }
-            ];
-        } else if (provider === 'xai') {
-            return [
-                { value: 'grok-3', label: 'Grok-3 (Recommended)' },
-                { value: 'grok-3-mini', label: 'Grok-3 Mini (Fast)' },
-                { value: 'grok-4-0709', label: 'Grok-4 (Experimental)' }
-            ];
-        }
-        return [];
+    const handleFileUploaded = (file) => {
+        console.log('File uploaded:', file);
+        // You can add a notification or update UI here
     };
 
-    // Show chat interface if we have a currentChat (including new chat with id: null)
-    if (currentChat) {
-        return (
-            <div className="chat-window">
-                <div className="chat-header">
-                    <div className="chat-info">
-                        <h3>{currentChat.title}</h3>
-                        <span className="chat-model">
-                            {currentChat.model_provider} - {currentChat.model_name}
-                        </span>
-                    </div>
-                    <div className="model-selector">
-                        <select
-                            value={selectedProvider}
-                            onChange={(e) => {
-                                setSelectedProvider(e.target.value);
-                                setSelectedModel(getModelOptions(e.target.value)[0]?.value || '');
-                            }}
-                        >
-                            <option value="openai">OpenAI</option>
-                            <option value="xai">xAI</option>
-                        </select>
-                        <select
-                            value={selectedModel}
-                            onChange={(e) => setSelectedModel(e.target.value)}
-                        >
-                            {getModelOptions(selectedProvider).map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
+    const handleFileDeleted = (fileId) => {
+        console.log('File deleted:', fileId);
+        // You can add a notification or update UI here
+    };
+
+    const availableModels = [
+        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'openai' },
+        { id: 'gpt-4', name: 'GPT-4', provider: 'openai' },
+        { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai' },
+        { id: 'grok-4-0709', name: 'Grok-4 (July 2025)', provider: 'xai' },
+        { id: 'grok-3', name: 'Grok-3', provider: 'xai' }
+    ];
+
+    return (
+        <div className="chat-window">
+            {/* Header */}
+            <div className="chat-header">
+                <h2 className="chat-title">
+                    {currentChat ? currentChat.title : 'New Chat'}
+                </h2>
+
+                {/* Model Selector */}
+                <div className="model-selector">
+                    <button
+                        className="model-selector-btn"
+                        onClick={() => setShowModelSelector(!showModelSelector)}
+                        title="Select AI Model"
+                    >
+                        <Settings className="w-4 h-4" />
+                        <span>{availableModels.find(m => m.id === selectedModel)?.name || 'GPT-3.5 Turbo'}</span>
+                    </button>
+
+                    {showModelSelector && (
+                        <div className="model-dropdown">
+                            {availableModels.map((model) => (
+                                <button
+                                    key={model.id}
+                                    className={`model-option ${selectedModel === model.id ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setSelectedModel(model.id);
+                                        setShowModelSelector(false);
+                                    }}
+                                >
+                                    {model.name}
+                                </button>
                             ))}
-                        </select>
-                    </div>
+                        </div>
+                    )}
                 </div>
 
-                <div className="messages-container">
-                    {messages.length === 0 ? (
-                        <div className="empty-chat">
-                            <Bot size={64} />
-                            <h3>Start a conversation</h3>
-                            <p>Send a message to begin chatting with {selectedProvider}!</p>
-                        </div>
-                    ) : (
-                        messages.map((message) => (
-                            <div
-                                key={message.id}
-                                className={`message ${message.role === 'user' ? 'user' : 'assistant'}`}
-                            >
-                                <div className="message-avatar">
-                                    {message.role === 'user' ? <User size={20} /> : <Bot size={20} />}
-                                </div>
-                                <div className="message-content">
-                                    <div className="message-text">
-                                        {message.role === 'assistant' ? (
+                {/* Mode Toggles */}
+                <div className="mode-toggles">
+                    <button
+                        className={`mode-toggle ${thinkMode ? 'active' : ''}`}
+                        onClick={() => setThinkMode(!thinkMode)}
+                        title="Think Mode"
+                    >
+                        <Brain className="w-4 h-4" />
+                        <span>Think</span>
+                    </button>
+                    <button
+                        className={`mode-toggle ${deepResearchMode ? 'active' : ''}`}
+                        onClick={() => setDeepResearchMode(!deepResearchMode)}
+                        title="Deep Research Mode"
+                    >
+                        <Search className="w-4 h-4" />
+                        <span>Research</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* File Upload Section */}
+            {showFileUpload && currentChat && (
+                <div className="file-upload-section">
+                    <FileUpload
+                        chatId={currentChat.id}
+                        onFileUploaded={handleFileUploaded}
+                        onFileDeleted={handleFileDeleted}
+                    />
+                </div>
+            )}
+
+            {/* Messages */}
+            <div className="messages-container">
+                {messages.length === 0 ? (
+                    <div className="empty-state">
+                        <Bot className="w-12 h-12 text-gray-400" />
+                        <p className="text-gray-500">Start a conversation or upload files for context</p>
+                    </div>
+                ) : (
+                    messages.map((message, index) => (
+                        <div
+                            key={message.id}
+                            className={`message ${message.role === 'user' ? 'user' : 'assistant'}`}
+                        >
+                            <div className="message-avatar">
+                                {message.role === 'user' ? <User size={20} /> : <Bot size={20} />}
+                            </div>
+                            <div className="message-content">
+                                <div className="message-text">
+                                    {message.role === 'assistant' ? (
+                                        <div>
                                             <ReactMarkdown
                                                 remarkPlugins={[remarkGfm]}
                                                 components={{
-                                                    // Custom styling for code blocks
                                                     code: ({ node, inline, className, children, ...props }) => {
                                                         const match = /language-(\w+)/.exec(className || '');
-                                                        return !inline && match ? (
+                                                        return !inline ? (
                                                             <pre className="code-block">
                                                                 <code className={className} {...props}>
                                                                     {children}
@@ -160,102 +170,93 @@ const ChatWindow = ({
                                                             </code>
                                                         );
                                                     },
-                                                    // Custom styling for tables
-                                                    table: ({ children }) => (
-                                                        <div className="table-container">
-                                                            <table>{children}</table>
-                                                        </div>
+                                                    a: ({ children, href }) => (
+                                                        <a href={href} target="_blank" rel="noopener noreferrer">
+                                                            {children}
+                                                        </a>
                                                     ),
-                                                    // Custom styling for blockquotes
                                                     blockquote: ({ children }) => (
                                                         <blockquote className="blockquote">
                                                             {children}
                                                         </blockquote>
+                                                    ),
+                                                    table: ({ children }) => (
+                                                        <div className="table-container">
+                                                            <table>{children}</table>
+                                                        </div>
                                                     )
                                                 }}
                                             >
                                                 {message.content}
                                             </ReactMarkdown>
-                                        ) : (
-                                            message.content
-                                        )}
-                                    </div>
-                                    <div className="message-time">
-                                        {formatTime(message.created_at)}
-                                    </div>
+                                            {message.isStreaming && <span className="typing-cursor">|</span>}
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            {/* Simple text rendering for user messages */}
+                                            <span>{message.content}</span>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))
-                    )}
-                    {isLoading && (
-                        <div className="message assistant">
-                            <div className="message-avatar">
-                                <Bot size={20} />
-                            </div>
-                            <div className="message-content">
-                                <div className="message-text">
-                                    <div className="typing-indicator">
-                                        <span></span>
-                                        <span></span>
-                                        <span></span>
-                                    </div>
+                                <div className="message-time">
+                                    {formatTime(message.created_at)}
                                 </div>
                             </div>
                         </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                </div>
-
-                {/* Thinking and Research Mode Toggles */}
-                <div className="mode-toggles">
-                    <button
-                        type="button"
-                        className={`mode-toggle ${thinkingMode ? 'active' : ''}`}
-                        onClick={() => setThinkingMode(!thinkingMode)}
-                        disabled={isLoading}
-                        title="Enable thinking mode for step-by-step reasoning"
-                    >
-                        <Brain size={16} />
-                        <span>Think</span>
-                    </button>
-                    <button
-                        type="button"
-                        className={`mode-toggle ${deepResearchMode ? 'active' : ''}`}
-                        onClick={() => setDeepResearchMode(!deepResearchMode)}
-                        disabled={isLoading}
-                        title="Enable deep research mode for comprehensive analysis"
-                    >
-                        <Search size={16} />
-                        <span>Deep Research</span>
-                    </button>
-                </div>
-
-                <form className="message-input" onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        value={inputMessage}
-                        onChange={(e) => setInputMessage(e.target.value)}
-                        placeholder="Type your message..."
-                        disabled={isLoading}
-                    />
-                    <button type="submit" disabled={!inputMessage.trim() || isLoading}>
-                        <Send size={20} />
-                    </button>
-                </form>
+                    ))
+                )}
+                {isLoading && !messages.some(m => m.isStreaming) && (
+                    <div className="message assistant">
+                        <div className="message-avatar">
+                            <Bot size={20} />
+                        </div>
+                        <div className="message-content">
+                            <div className="message-text">
+                                <span className="typing-cursor">|</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} />
             </div>
-        );
-    }
 
-    // Show welcome message when no chat is selected
-    return (
-        <div className="chat-window">
-            <div className="no-chat-selected">
-                <Bot size={64} />
-                <h3>Welcome to AI Chat</h3>
-                <p>Select a chat from the sidebar or start a new conversation!</p>
+            {/* Input Area */}
+            <div className="input-area">
+                <form onSubmit={handleSubmit} className="input-form">
+                    <div className="input-container">
+                        {/* File Upload Toggle */}
+                        {currentChat && (
+                            <button
+                                type="button"
+                                className={`file-upload-btn ${showFileUpload ? 'active' : ''}`}
+                                onClick={() => setShowFileUpload(!showFileUpload)}
+                                title="Upload files for context"
+                            >
+                                <Paperclip className="w-4 h-4" />
+                            </button>
+                        )}
+
+                        <input
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            placeholder="Type your message..."
+                            className="message-input"
+                            disabled={isLoading}
+                        />
+
+                        <button
+                            type="submit"
+                            disabled={!inputValue.trim() || isLoading}
+                            className="send-button"
+                        >
+                            <Send className="w-4 h-4" />
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );
 };
 
-export default ChatWindow; 
+export default ChatWindow;

@@ -30,5 +30,13 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Run the application using uv
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Create a startup script
+RUN echo '#!/bin/bash\nPORT=${PORT:-8000}\nuv run uvicorn app.main:app --host 0.0.0.0 --port $PORT' > /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Run the application using the startup script
+CMD ["/app/start.sh"] 
