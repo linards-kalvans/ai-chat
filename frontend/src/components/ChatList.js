@@ -86,6 +86,7 @@ const ChatList = ({
                                     <div className="chat-title">{chat.title}</div>
                                     <div className="chat-meta">
                                         <span className="chat-provider">{formatProvider(chat.model_provider)}</span>
+                                        <span className="chat-model">{chat.model_name}</span>
                                         <span className="chat-time">{formatTime(chat.updated_at || chat.created_at)}</span>
                                         <span className="chat-date">{formatDate(chat.updated_at || chat.created_at)}</span>
                                     </div>

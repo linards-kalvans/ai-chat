@@ -71,6 +71,12 @@ const ChatWindow = ({
                 <h2 className="chat-title">
                     {currentChat ? currentChat.title : 'New Chat'}
                 </h2>
+                {currentChat && (
+                    <div className="chat-model-info">
+                        <span className="chat-provider">{currentChat.model_provider}</span>
+                        <span className="chat-model">{currentChat.model_name}</span>
+                    </div>
+                )}
 
                 {/* Model Selector */}
                 <div className="model-selector">
@@ -236,13 +242,18 @@ const ChatWindow = ({
                             </button>
                         )}
 
-                        <input
-                            type="text"
+                        <textarea
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder="Type your message..."
                             className="message-input"
                             disabled={isLoading}
+                            rows={2}
+                            onKeyDown={(e) => {
+                                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                                    handleSubmit(e);
+                                }
+                            }}
                         />
 
                         <button

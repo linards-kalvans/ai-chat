@@ -27,6 +27,13 @@ COPY . .
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
+# Create data directory
+RUN mkdir -p /app/data
+
+# Set permissions
+RUN chown -R appuser:appuser /app/data
+# RUN chmod -R 777 /app/data
+
 # Expose port
 EXPOSE 8000
 

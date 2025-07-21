@@ -116,7 +116,22 @@ function App() {
             // If no chat exists, create one first
             if (!chatId) {
                 try {
-                    const newChat = await chatAPI.createChat({ title: 'New Chat' });
+                    // Determine provider based on selected model
+                    const availableModels = [
+                        { id: 'gpt-3.5-turbo', provider: 'openai' },
+                        { id: 'gpt-4', provider: 'openai' },
+                        { id: 'gpt-4-turbo', provider: 'openai' },
+                        { id: 'grok-4-0709', provider: 'xai' },
+                        { id: 'grok-3', provider: 'xai' }
+                    ];
+                    const modelInfo = availableModels.find(m => m.id === selectedModel);
+                    const provider = modelInfo ? modelInfo.provider : 'openai';
+
+                    const newChat = await chatAPI.createChat({
+                        title: 'New Chat',
+                        model_provider: provider,
+                        model_name: selectedModel
+                    });
                     chatId = newChat.id;
                     setCurrentChat(newChat);
                 } catch (createError) {
